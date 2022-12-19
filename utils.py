@@ -30,7 +30,7 @@ class ChatHistory:
 
 def record_in_history(chat_id: int, text: str, history: ChatHistory):
     history.add(chat_id, text)
-    print("HISTORY")
-    print(history.get(chat_id))
-
-
+    print("HISTORY FOR CHAT")
+    print("__________________")
+    print(f"{history.get(chat_id)}")
+    print("__________________")

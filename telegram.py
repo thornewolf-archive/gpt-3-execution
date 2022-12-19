@@ -82,6 +82,9 @@ def get_updates_since_offset(token: str = "", offset: int = 0) -> list[Update]:
 
 @provide_telegram_token
 def send_message(chat_id: int, text: str, token: str = "") -> None:
+    if text.strip() == "":
+        send_message(chat_id, "DEBUG: tried to end empty message", token=token)
+        return
     method = "sendMessage"
     payload = {
         "chat_id": chat_id,
