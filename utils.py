@@ -1,14 +1,8 @@
 import sys
-from dotenv import load_dotenv
 from functools import wraps
-from typing import Callable
-from pydantic import BaseModel, Field
-import openai
+from typing import Callable, Any
 from collections import defaultdict
-from telegram import (
-    Update,
-)
-from gpt import get_gpt_response, user_input_as_prompt
+import os
 
 
 class ChatHistory:
@@ -30,7 +24,36 @@ class ChatHistory:
 
 def record_in_history(chat_id: int, text: str, history: ChatHistory):
     history.add(chat_id, text)
-    print("HISTORY FOR CHAT")
-    print("__________________")
-    print(f"{history.get(chat_id)}")
-    print("__________________")
+    block_log_value("CHAT HISTORY", history.get(chat_id))
+
+
+def retry(times: int = 3):
+    def decorator(func: Callable):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            for _ in range(times):
+                try:
+                    return func(*args, **kwargs)
+                except Exception as e:
+                    print(f"Error: {e}")
+
+        return wrapper
+
+    return decorator
+
+
+def block_log_value(statement: str, value: Any):
+    print()
+    print(statement.upper())
+    print("__________________" * 3)
+    print(value)
+    print("__________________" * 3)
+    print()
+
+
+def set_ans(value: str):
+    os.environ["ans"] = value
+
+
+def get_ans() -> str:
+    return os.environ.get("ans", "")
