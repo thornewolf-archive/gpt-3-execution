@@ -41,7 +41,7 @@ class Update(BaseModel):
     message: Message
 
 
-def provide_telegram_token(fn: Callable):
+def _provide_telegram_token(fn: Callable):
     assert TELEGRAM_API_KEY is not None
 
     @wraps(fn)
@@ -51,7 +51,7 @@ def provide_telegram_token(fn: Callable):
     return wrapper
 
 
-def send_telegram_api_request(
+def _send_telegram_api_request(
     method: str, payload: dict | None = None, token: str = ""
 ):
     assert token is not None
@@ -67,7 +67,7 @@ def send_telegram_api_request(
     return response
 
 
-@provide_telegram_token
+@_provide_telegram_token
 def get_updates_since_offset(token: str = "", offset: int = 0) -> list[Update]:
     method = "getUpdates"
     payload = {
@@ -75,12 +75,12 @@ def get_updates_since_offset(token: str = "", offset: int = 0) -> list[Update]:
         "limit": 1,
         "timeout": 10,
     }
-    response = send_telegram_api_request(method, payload=payload, token=token)
+    response = _send_telegram_api_request(method, payload=payload, token=token)
     result = response.json()["result"]
     return [Update(**e) for e in result]
 
 
-@provide_telegram_token
+@_provide_telegram_token
 def send_message(chat_id: int, text: str, token: str = "") -> None:
     if text.strip() == "":
         send_message(chat_id, "DEBUG: tried to end empty message")
@@ -91,11 +91,11 @@ def send_message(chat_id: int, text: str, token: str = "") -> None:
         "text": text,
     }
     try:
-        send_telegram_api_request(method, payload=payload, token=token)
+        _send_telegram_api_request(method, payload=payload, token=token)
     except Exception as e:
         print(f'Error sending message "{text[:10]}" to {chat_id}')
         raise e
 
 
-def filter_nonhuman_updates(updates: list[Update]) -> list[Update]:
+def get_only_human_updates(updates: list[Update]) -> list[Update]:
     return [e for e in updates if not e.message.user_from.is_bot]
