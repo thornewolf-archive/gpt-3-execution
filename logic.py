@@ -61,7 +61,9 @@ def handle_process(response: str) -> str:
     return MASTER_CONTINUE_TEMPLATE
 
 
-def intercept_ai_commands(response: str, chat_id: int, history: ChatHistory) -> str:
+def intercept_ai_commands(
+    response: str, chat_id: int, history: ChatHistory
+) -> str | None:
     """
     Intercept commands from the AI.
 
