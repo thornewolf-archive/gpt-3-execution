@@ -98,7 +98,7 @@ def get_response_for_chat_id(chat_id: int, history: ChatHistory) -> str:
 
 
 def read_and_respond_to_chats_forever():
-    offset = 2083323969
+    offset = 0
     history = ChatHistory()
     while True:
         updates = get_updates_since_offset(offset=offset)

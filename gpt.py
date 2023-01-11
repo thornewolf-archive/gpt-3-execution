@@ -271,7 +271,7 @@ def get_gpt_response(text: str) -> str:
     remaining_chars = (MAX_LENGTH - HEADER_LENGTH) * 2
     text = text[-remaining_chars:]
     response = openai.Completion.create(
-        engine="text-davinci-002",
+        engine="text-davinci-003",
         prompt=f"{PROMPT_PREFIX}\n{text}",
         temperature=0.0,
         max_tokens=500,
