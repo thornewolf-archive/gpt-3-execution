@@ -24,7 +24,7 @@ class ChatHistory:
 
 def record_in_history(chat_id: int, text: str, history: ChatHistory):
     history.add(chat_id, text)
-    block_log_value("CHAT HISTORY", history.get(chat_id))
+    log_value_annotated("CHAT HISTORY", history.get(chat_id))
 
 
 def retry(times: int = 3):
@@ -42,7 +42,7 @@ def retry(times: int = 3):
     return decorator
 
 
-def block_log_value(statement: str, value: Any):
+def log_value_annotated(statement: str, value: Any):
     print()
     print(statement.upper())
     print("__________________" * 3)

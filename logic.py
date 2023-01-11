@@ -1,31 +1,18 @@
 import os
 
+from prompts import (
+    MASTER_CONTINUE_TEMPLATE,
+    CODE_RESULT_TEMPLATE,
+    ERROR_RESULT_TEMPLATE,
+)
 from telegram import (
     get_updates_since_offset,
-    filter_nonhuman_updates,
+    get_only_human_updates,
     Update,
     send_message,
 )
-from utils import ChatHistory, record_in_history, block_log_value, get_ans, set_ans
-from gpt import user_input_as_prompt, get_gpt_response
-
-CODE_RESULT_TEMPLATE = """
-MASTER:
-CODE RESULT
-{}
-"""
-
-ERROR_RESULT_TEMPLATE = """
-MASTER:
-ERROR
-{}
-Show me your code without the EXEC: and DONE lines. Also tell me what the error was."""
-
-MASTER_CONTINUE_TEMPLATE = """
-MASTER:
-continue.
-
-"""
+from utils import ChatHistory, record_in_history, log_value_annotated, get_ans, set_ans
+from gpt import convert_to_prompt, get_gpt_response
 
 
 def handle_user_commands(updates: list[Update], history: ChatHistory) -> list[Update]:
@@ -59,7 +46,7 @@ def parse_block(header: str, response: str) -> str:
 
 def handle_exec(response: str) -> str:
     block = parse_block("EXEC:", response)
-    block_log_value("HANDLING EXEC COMMAND", response)
+    log_value_annotated("HANDLING EXEC COMMAND", response)
     try:
         exec(block)
     except Exception as e:
@@ -70,28 +57,42 @@ def handle_exec(response: str) -> str:
 
 def handle_process(response: str) -> str:
     block = parse_block("PROCESS:", response)
-    block_log_value("HANDLING PROCESS COMMAND", response)
+    log_value_annotated("HANDLING PROCESS COMMAND", response)
     return MASTER_CONTINUE_TEMPLATE
 
 
-def handle_commands(response: str, chat_id: int, history: ChatHistory) -> bool:
+def intercept_ai_commands(response: str, chat_id: int, history: ChatHistory) -> str:
+    """
+    Intercept commands from the AI.
+
+    Supported commands:
+    EXEC: <code> DONE
+    PROCESS: <code> DONE
+
+    Returns True if a command was intercepted, False otherwise.
+    """
+    result = None
     if "EXEC" in response:
         result = handle_exec(response)
-        record_in_history(chat_id, result, history)
-        return True
     if "PROCESS" in response:
         result = handle_process(response)
-        record_in_history(chat_id, result, history)
-        return True
-    return False
+    return result
 
 
-def get_response_for_chat_id(chat_id: int, history: ChatHistory) -> str:
+def get_llm_completion_for_chat(chat_id: int, history: ChatHistory) -> str:
+    """
+    Gets a completion from the LLM for a given chat.
+
+    Returns the completion as a string.
+    """
     while True:
         response = get_gpt_response(history.get(chat_id))
         record_in_history(chat_id, response, history)
-        block_log_value("GOT RESPONSE FROM GPT", response)
-        if handle_commands(response, chat_id, history):
+        log_value_annotated("GOT RESPONSE FROM GPT", response)
+        if (
+            command_result := intercept_ai_commands(response, chat_id, history)
+        ) is not None:
+            record_in_history(chat_id, command_result, history)
             continue
         break
     return response
@@ -104,14 +105,14 @@ def read_and_respond_to_chats_forever():
         updates = get_updates_since_offset(offset=offset)
         if len(updates) == 0:
             continue
-        block_log_value("GOT UPDATES", updates)
+        log_value_annotated("GOT UPDATES", updates)
         offset = max([e.update_id for e in updates]) + 1
 
-        updates = filter_nonhuman_updates(updates)
+        updates = get_only_human_updates(updates)
         updates = handle_user_commands(updates, history)
         for update in updates:
             chat_id = update.message.chat.id
-            prompt = user_input_as_prompt(update.message.text)
+            prompt = convert_to_prompt(update.message.text)
             record_in_history(chat_id, prompt, history)
-            response = get_response_for_chat_id(chat_id, history)
+            response = get_llm_completion_for_chat(chat_id, history)
             send_message(chat_id, response)
