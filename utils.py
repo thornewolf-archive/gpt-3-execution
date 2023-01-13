@@ -5,16 +5,21 @@ from collections import defaultdict
 import os
 
 
+"""
+This module contains various utilities for the project.
+"""
+
+
 class ChatHistory:
     def __init__(self):
-        self.history: defaultdict[int, list[str]] = defaultdict(list)
+        self.history: defaultdict[str, list[str]] = defaultdict(list)
 
-    def add(self, chat_id: int, message: str):
+    def add(self, chat_id: str, message: str):
         if sys.getsizeof(self.history) > 1 * 1024:  # 1kb
             self.clear()
         self.history[chat_id].append(message)
 
-    def get(self, chat_id: int) -> str:
+    def get(self, chat_id: str) -> str:
         return "\n".join(self.history[chat_id])
 
     def clear(self):
@@ -22,9 +27,9 @@ class ChatHistory:
             self.history[k] = []
 
 
-def record_in_history(chat_id: int, text: str, history: ChatHistory):
+def record_in_history(chat_id: str, text: str, history: ChatHistory):
     history.add(chat_id, text)
-    log_value_annotated("CHAT HISTORY", history.get(chat_id))
+    # log_value_annotated("CHAT HISTORY", history.get(chat_id))
 
 
 def retry(times: int = 3):
@@ -42,7 +47,7 @@ def retry(times: int = 3):
     return decorator
 
 
-def log_value_annotated(statement: str, value: Any):
+def block_log_value(statement: str, value: Any):
     print()
     print(statement.upper())
     print("__________________" * 3)

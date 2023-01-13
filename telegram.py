@@ -1,3 +1,7 @@
+"""
+Module for interfacing with telegram as a frontend.
+"""
+
 import os
 import requests
 from dotenv import load_dotenv
@@ -5,6 +9,8 @@ from functools import wraps
 from typing import Callable
 from pydantic import BaseModel, Field
 import openai
+from text_interface import TextInterface
+from text_interface import Message as TextInterfaceMessage
 
 load_dotenv()
 
@@ -68,7 +74,7 @@ def _send_telegram_api_request(
 
 
 @_provide_telegram_token
-def get_updates_since_offset(token: str = "", offset: int = 0) -> list[Update]:
+def get_updates(token: str = "", offset: int = 0) -> list[Update]:
     method = "getUpdates"
     payload = {
         "offset": offset,
@@ -97,5 +103,29 @@ def send_message(chat_id: int, text: str, token: str = "") -> None:
         raise e
 
 
-def get_only_human_updates(updates: list[Update]) -> list[Update]:
+def filter_to_human_updates(updates: list[Update]) -> list[Update]:
     return [e for e in updates if not e.message.user_from.is_bot]
+
+
+class TelegramInterface(TextInterface):
+    def __init__(self):
+        self.message_read_offset = 0
+
+    def get_new_messages(self) -> list[TextInterfaceMessage]:
+        updates = get_updates(offset=self.message_read_offset)
+        if len(updates) == 0:
+            return []
+        self.message_read_offset = max(u.update_id for u in updates) + 1
+        updates = filter_to_human_updates(updates)
+        return [
+            TextInterfaceMessage(
+                text=update.message.text,
+                message_id=str(update.message.message_id),
+                user_id=str(update.message.user_from.id),
+                chat_id=str(update.message.chat.id),
+            )
+            for update in updates
+        ]
+
+    def send_message(self, original_message: TextInterfaceMessage, body: str):
+        send_message(int(original_message.chat_id), body)
