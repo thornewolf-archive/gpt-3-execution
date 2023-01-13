@@ -2,7 +2,7 @@
 <p align="center">An AI assistant that write and execute code for you.</p>
 
 <p align="center">
-  <a href="https://github.com/usememos/memos/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/thornewolf/gpt-3-execution" /></a>
+  <a href="https://github.com/thornewolf/gpt-3-execution/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/thornewolf/gpt-3-execution" /></a>
 </p>
 
 <img width="564" alt="image" src="https://user-images.githubusercontent.com/16554266/208806066-bfb1a9e2-4fbb-4912-a0c7-5e91ead71e44.png">
