@@ -73,17 +73,27 @@ def _send_telegram_api_request(
     return response
 
 
+def create_update(data):
+    try:
+        return Update(**data)
+    except Exception as e:
+        print(e)
+        print(data)
+        return None
+
+
 @_provide_telegram_token
 def get_updates(token: str = "", offset: int = 0) -> list[Update]:
     method = "getUpdates"
     payload = {
         "offset": offset,
-        "limit": 1,
+        "limit": 10,
         "timeout": 10,
     }
     response = _send_telegram_api_request(method, payload=payload, token=token)
     result = response.json()["result"]
-    return [Update(**e) for e in result]
+    updates = [create_update(e) for e in result]
+    return [u for u in updates if u is not None]
 
 
 @_provide_telegram_token
