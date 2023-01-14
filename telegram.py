@@ -83,7 +83,7 @@ def create_update(data):
 
 
 @_provide_telegram_token
-def get_updates(token: str = "", offset: int = 0) -> list[Update]:
+def get_new_message_updates(token: str = "", offset: int = 0) -> list[Update]:
     method = "getUpdates"
     payload = {
         "offset": offset,
@@ -122,7 +122,7 @@ class TelegramInterface(TextInterface):
         self.message_read_offset = 0
 
     def get_new_messages(self) -> list[TextInterfaceMessage]:
-        updates = get_updates(offset=self.message_read_offset)
+        updates = get_new_message_updates(offset=self.message_read_offset)
         if len(updates) == 0:
             return []
         self.message_read_offset = max(u.update_id for u in updates) + 1

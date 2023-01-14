@@ -130,6 +130,13 @@ def get_llm_completion_for_chat(chat_id: str, history: ChatHistory) -> str:
     return response
 
 
+def write_history_into_file(history: ChatHistory):
+    with open("history.txt", "w") as f:
+        for chat_id, chat_history in history.history.items():
+            f.write(f"Chat {chat_id}\n")
+            f.write("\n".join(chat_history))
+
+
 def read_and_respond_to_chats_forever(
     history: ChatHistory, chat_interface: TextInterface
 ):
@@ -142,3 +149,4 @@ def read_and_respond_to_chats_forever(
         remaining_messages = handle_user_commands(messages, history, chat_interface)
         for message in remaining_messages:
             handle_user_message(message, history, chat_interface)
+        write_history_into_file(history)

@@ -10,6 +10,7 @@ from prompts import (
     MEMORY_DIRECTIVE,
     FALLABLE_DIRECTIVE,
     HUMILITY_DIRECTIVE,
+    PROCESS_DIRECTIVE,
     PROCESS_FAILURE_DIRECTIVE,
     PREPARATION,
 )
@@ -25,6 +26,8 @@ PROMPT_PREFIX = f"""
 
 {HUMILITY_DIRECTIVE}
 
+{PROCESS_DIRECTIVE}
+
 {PROCESS_FAILURE_DIRECTIVE}
 
 {PREPARATION}
@@ -37,13 +40,18 @@ def remove_hallucinated_master_response(text: str) -> str:
     return text
 
 
+def write_most_recent_prompt_to_file(prompt: str):
+    with open("most_recent_prompt.txt", "w") as f:
+        f.write(prompt)
+
+
 def get_gpt_response(text: str) -> str:
     MAX_LENGTH = int(4000 * 0.75)
     PREFIX_LENGTH = int(len(PROMPT_PREFIX) * 0.75)
     remaining_chars = int((MAX_LENGTH - PREFIX_LENGTH) * 0.75)
-    text = text[-remaining_chars:]
+    # text = text[-remaining_chars:]
     prompt = f"{PROMPT_PREFIX}\n{text}"
-    block_log_value("USING PROMPT | LAST 100 CHARS", prompt[-100:])
+    write_most_recent_prompt_to_file(prompt)
     response = openai.Completion.create(
         engine="text-davinci-003",
         prompt=prompt,
