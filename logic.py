@@ -12,8 +12,15 @@ from prompts import (
     CODE_RESULT_TEMPLATE,
     ERROR_RESULT_TEMPLATE,
 )
-from utils import ChatHistory, record_in_history, block_log_value, get_ans, set_ans
-from gpt import convert_to_prompt, get_gpt_response
+from utils import (
+    ChatHistory,
+    record_in_history,
+    log_event,
+    get_ans,
+    set_ans,
+    write_history_into_file,
+)
+from gpt import convert_to_human_message, get_gpt_response
 from text_interface import Message, TextInterface
 
 
@@ -25,7 +32,7 @@ def handle_user_message(
 
     Passes the message to the LLM and sends the response to the user.
     """
-    prompt = convert_to_prompt(message.text)
+    prompt = convert_to_human_message(message.text)
     record_in_history(message.chat_id, prompt, history)
     response = get_llm_completion_for_chat(message.chat_id, history)
     chat_interface.send_message(message, response)
@@ -64,7 +71,7 @@ def parse_block(header: str, response: str) -> str:
 
 def handle_exec(response: str) -> str:
     block = parse_block("EXEC:", response)
-    block_log_value("HANDLING EXEC COMMAND", response)
+    log_event("HANDLING EXEC COMMAND", response)
     try:
         exec(block)
     except Exception as e:
@@ -75,16 +82,16 @@ def handle_exec(response: str) -> str:
 
 def handle_process(response: str) -> str:
     block = parse_block("PROCESS:", response)
-    block_log_value("HANDLING PROCESS COMMAND", response)
+    log_event("HANDLING PROCESS COMMAND", response)
     return MASTER_CONTINUE_TEMPLATE
 
 
 def handle_empty_response(response: str) -> str:
-    block_log_value("HANDLING EMPTY RESPONSE", response)
+    log_event("HANDLING EMPTY RESPONSE", response)
     return MASTER_USE_DATA_TEMPLATE
 
 
-def maybe_intercept_ai_response(
+def maybe_handle_response_directive(
     response: str, chat_id: str, history: ChatHistory
 ) -> str | None:
     """
@@ -97,13 +104,13 @@ def maybe_intercept_ai_response(
     Returns True if a command was intercepted, False otherwise.
     """
     result = None
-    # AI is running cod
+    # AI is running code
     if "EXEC" in response:
         result = handle_exec(response)
-    # AI is planning
+    # AI is planning what it will do next
     if "PROCESS" in response:
         result = handle_process(response)
-    if len(response) < 5:
+    if len(response) < 1:
         result = handle_empty_response(response)
         result = None
     return result
@@ -118,23 +125,16 @@ def get_llm_completion_for_chat(chat_id: str, history: ChatHistory) -> str:
     while True:
         response = get_gpt_response(history.get(chat_id))
         record_in_history(chat_id, response, history)
-        block_log_value(
-            "GOT RESPONSE FROM GPT",
+        log_event(
+            "GPT COMPLETION",
             f"{response}",
         )
-        intercept_result = maybe_intercept_ai_response(response, chat_id, history)
+        intercept_result = maybe_handle_response_directive(response, chat_id, history)
         if intercept_result is not None:
             record_in_history(chat_id, intercept_result, history)
             continue
         break
     return response
-
-
-def write_history_into_file(history: ChatHistory):
-    with open("history.txt", "w") as f:
-        for chat_id, chat_history in history.history.items():
-            f.write(f"Chat {chat_id}\n")
-            f.write("\n".join(chat_history))
 
 
 def read_and_respond_to_chats_forever(
@@ -144,7 +144,7 @@ def read_and_respond_to_chats_forever(
         messages = chat_interface.get_new_messages()
         if len(messages) == 0:
             continue
-        block_log_value("RECEIVED USER MESSAGE", messages)
+        log_event("RECEIVED USER MESSAGE", messages)
 
         remaining_messages = handle_user_commands(messages, history, chat_interface)
         for message in remaining_messages:

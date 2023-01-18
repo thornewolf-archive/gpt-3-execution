@@ -2,7 +2,6 @@
 This module contains the wrapper logic for interacting with GPT-3 as an LLM.
 """
 import openai
-from utils import retry, block_log_value
 from prompts import (
     HUMAN_TITLE,
     INTRODUCTION,
@@ -46,10 +45,6 @@ def write_most_recent_prompt_to_file(prompt: str):
 
 
 def get_gpt_response(text: str) -> str:
-    MAX_LENGTH = int(4000 * 0.75)
-    PREFIX_LENGTH = int(len(PROMPT_PREFIX) * 0.75)
-    remaining_chars = int((MAX_LENGTH - PREFIX_LENGTH) * 0.75)
-    # text = text[-remaining_chars:]
     prompt = f"{PROMPT_PREFIX}\n{text}"
     write_most_recent_prompt_to_file(prompt)
     response = openai.Completion.create(
@@ -60,10 +55,12 @@ def get_gpt_response(text: str) -> str:
         top_p=1,
         frequency_penalty=0,
         presence_penalty=0.6,
-        # stop=[],
     )
     return remove_hallucinated_master_response(response.choices[0].text)  # type: ignore
 
 
-def convert_to_prompt(text: str) -> str:
+def convert_to_human_message(text: str) -> str:
+    """
+    Format the text as a message from human's side of the conversation.
+    """
     return f"{HUMAN_TITLE}:\n\n{text}\n\nAssistant:"

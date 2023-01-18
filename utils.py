@@ -3,7 +3,9 @@ from functools import wraps
 from typing import Callable, Any
 from collections import defaultdict
 import os
+import logging
 
+logger = logging.getLogger(__name__)
 
 """
 This module contains various utilities for the project.
@@ -27,6 +29,13 @@ class ChatHistory:
             self.history[k] = []
 
 
+def write_history_into_file(history: ChatHistory):
+    with open("history.txt", "w") as f:
+        for chat_id, chat_history in history.history.items():
+            f.write(f"Chat {chat_id}\n")
+            f.write("\n".join(chat_history))
+
+
 def record_in_history(chat_id: str, text: str, history: ChatHistory):
     history.add(chat_id, text)
     # log_value_annotated("CHAT HISTORY", history.get(chat_id))
@@ -47,13 +56,16 @@ def retry(times: int = 3):
     return decorator
 
 
-def block_log_value(statement: str, value: Any):
-    print()
-    print(statement.upper())
-    print("__________________" * 3)
-    print(value)
-    print("__________________" * 3)
-    print()
+def log_event(statement: str, value: Any):
+    logging.info(
+        f"""
+{statement.upper()}
+______________________________________________________
+{value}
+______________________________________________________
+
+    """
+    )
 
 
 def set_ans(value: str):
