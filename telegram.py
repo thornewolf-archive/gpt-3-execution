@@ -48,7 +48,10 @@ class Update(BaseModel):
 
 
 def _provide_telegram_token(fn: Callable):
-    assert TELEGRAM_API_KEY is not None
+    if TELEGRAM_API_KEY is None:
+        raise Exception(
+            "TELEGRAM_API_KEY not set. Please set it in .env file. Try checking if you made a typo."
+        )
 
     @wraps(fn)
     def wrapper(*args, **kwargs):
