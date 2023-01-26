@@ -77,13 +77,13 @@ def create_update(data):
     try:
         return Update(**data)
     except Exception as e:
-        print(e)
-        print(data)
         return None
 
 
 @_provide_telegram_token
-def get_new_message_updates(token: str = "", offset: int = 0) -> list[Update]:
+def get_new_message_updates(
+    token: str = "", offset: int = 0
+) -> tuple[list[Update], int]:
     method = "getUpdates"
     payload = {
         "offset": offset,
@@ -92,8 +92,13 @@ def get_new_message_updates(token: str = "", offset: int = 0) -> list[Update]:
     }
     response = _send_telegram_api_request(method, payload=payload, token=token)
     result = response.json()["result"]
+
+    if len(result) == 0:
+        return [], offset
+    new_offset = max([e["update_id"] for e in result]) + 1
+    print(f"New offset: {new_offset}")
     updates = [create_update(e) for e in result]
-    return [u for u in updates if u is not None]
+    return [u for u in updates if u is not None], new_offset
 
 
 @_provide_telegram_token
@@ -110,7 +115,7 @@ def send_message(chat_id: int, text: str, token: str = "") -> None:
         _send_telegram_api_request(method, payload=payload, token=token)
     except Exception as e:
         print(f'Error sending message "{text[:10]}" to {chat_id}')
-        raise e
+        print(e)
 
 
 def filter_to_human_updates(updates: list[Update]) -> list[Update]:
@@ -122,10 +127,10 @@ class TelegramInterface(TextInterface):
         self.message_read_offset = 0
 
     def get_new_messages(self) -> list[TextInterfaceMessage]:
-        updates = get_new_message_updates(offset=self.message_read_offset)
+        updates, new_offset = get_new_message_updates(offset=self.message_read_offset)
         if len(updates) == 0:
             return []
-        self.message_read_offset = max(u.update_id for u in updates) + 1
+        self.message_read_offset = new_offset
         updates = filter_to_human_updates(updates)
         return [
             TextInterfaceMessage(
