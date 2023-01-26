@@ -30,6 +30,7 @@ class ChatHistory:
 
 
 def write_history_into_file(history: ChatHistory):
+    print("Writing history into file...")
     with open("history.txt", "w") as f:
         for chat_id, chat_history in history.history.items():
             f.write(f"Chat {chat_id}\n")
@@ -57,14 +58,16 @@ def retry(times: int = 3):
 
 
 def log_event(statement: str, value: Any):
-    logging.info(
+    logger.log(
+        21,
         f"""
+#####################################################
 {statement.upper()}
 ______________________________________________________
 {value}
 ______________________________________________________
 
-    """
+    """,
     )
 
 

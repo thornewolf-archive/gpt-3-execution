@@ -11,7 +11,10 @@ logger = logging.getLogger(__name__)
 
 
 def main():
-    read_and_respond_to_chats_forever(ChatHistory(), TelegramInterface())
+    try:
+        read_and_respond_to_chats_forever(ChatHistory(), TelegramInterface())
+    except KeyboardInterrupt:
+        logger.info("Exiting bot...")
 
 
 if __name__ == "__main__":

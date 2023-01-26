@@ -2,6 +2,7 @@
 This module contains the wrapper logic for interacting with GPT-3 as an LLM.
 """
 import openai
+import logging
 from prompts import (
     HUMAN_TITLE,
     INTRODUCTION,
@@ -32,6 +33,8 @@ PROMPT_PREFIX = f"""
 {PREPARATION}
 """
 
+logger = logging.getLogger(__name__)
+
 
 def remove_hallucinated_master_response(text: str) -> str:
     if "MASTER:" in text:
@@ -44,19 +47,28 @@ def write_most_recent_prompt_to_file(prompt: str):
         f.write(prompt)
 
 
-def get_gpt_response(text: str) -> str:
+def get_gpt_prefixed_response(text: str) -> str:
     prompt = f"{PROMPT_PREFIX}\n{text}"
     write_most_recent_prompt_to_file(prompt)
-    response = openai.Completion.create(
-        engine="text-davinci-003",
-        prompt=prompt,
-        temperature=0.0,
-        max_tokens=500,
-        top_p=1,
-        frequency_penalty=0,
-        presence_penalty=0.6,
+    response = get_gpt_response(prompt)
+    return remove_hallucinated_master_response(response)
+
+
+def get_gpt_response(text: str) -> str:
+    logger.info(f"Sending prompt to GPT-3: {text}")
+    return (
+        openai.Completion.create(
+            engine="text-davinci-003",
+            prompt=text,
+            temperature=0.0,
+            max_tokens=500,
+            top_p=1,
+            frequency_penalty=0,
+            presence_penalty=0.6,
+        )
+        .choices[0]  # type: ignore
+        .text  # type: ignore
     )
-    return remove_hallucinated_master_response(response.choices[0].text)  # type: ignore
 
 
 def convert_to_human_message(text: str) -> str:

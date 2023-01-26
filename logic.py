@@ -20,13 +20,11 @@ from utils import (
     set_ans,
     write_history_into_file,
 )
-from gpt import convert_to_human_message, get_gpt_response
+from gpt import convert_to_human_message, get_gpt_prefixed_response
 from text_interface import Message, TextInterface
 
 
-def handle_user_message(
-    message: Message, history: ChatHistory, chat_interface: TextInterface
-):
+def handle_user_message( message: Message, history: ChatHistory, chat_interface: TextInterface):
     """
     Handle a message from the user.
 
@@ -38,9 +36,7 @@ def handle_user_message(
     chat_interface.send_message(message, response)
 
 
-def handle_user_commands(
-    messages: list[Message], history: ChatHistory, text_interface: TextInterface
-) -> list[Message]:
+def handle_user_commands( messages: list[Message], history: ChatHistory, text_interface: TextInterface) -> list[Message]:
     """
     Handle commands from the user.
 
@@ -123,7 +119,7 @@ def get_llm_completion_for_chat(chat_id: str, history: ChatHistory) -> str:
     Returns the completion as a string.
     """
     while True:
-        response = get_gpt_response(history.get(chat_id))
+        response = get_gpt_prefixed_response(history.get(chat_id))
         record_in_history(chat_id, response, history)
         log_event(
             "GPT COMPLETION",
