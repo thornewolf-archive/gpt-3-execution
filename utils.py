@@ -30,6 +30,8 @@ class ChatHistory:
 
 
 def write_history_into_file(history: ChatHistory):
+    if os.environ.get("ENABLE_WRITE_HISTORY_TO_FILE", "0") != "1":
+        return
     print("Writing history into file...")
     with open("history.txt", "w") as f:
         for chat_id, chat_history in history.history.items():

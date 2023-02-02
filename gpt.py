@@ -3,6 +3,7 @@ This module contains the wrapper logic for interacting with GPT-3 as an LLM.
 """
 import openai
 import logging
+import os
 from prompts import (
     HUMAN_TITLE,
     INTRODUCTION,
@@ -42,14 +43,17 @@ def remove_hallucinated_master_response(text: str) -> str:
     return text
 
 
-def write_most_recent_prompt_to_file(prompt: str):
+def write_most_recent_prompt_to_file_if_enabled(prompt: str):
+    if os.environ.get("ENABLE_WRITE_PROMPT_TO_FILE", "0") != "1":
+        print("skipping")
+        return
     with open("most_recent_prompt.txt", "w") as f:
         f.write(prompt)
 
 
 def get_gpt_prefixed_response(text: str) -> str:
     prompt = f"{PROMPT_PREFIX}\n{text}"
-    write_most_recent_prompt_to_file(prompt)
+    write_most_recent_prompt_to_file_if_enabled(prompt)
     response = get_gpt_response(prompt)
     return remove_hallucinated_master_response(response)
 
