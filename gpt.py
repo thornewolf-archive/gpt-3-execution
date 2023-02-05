@@ -51,9 +51,20 @@ def write_most_recent_prompt_to_file_if_enabled(prompt: str):
         f.write(prompt)
 
 
+def coerce_to_token_count(text: str, token_count: int) -> str:
+    """
+    Coerce the text to be at most token_count tokens long.
+    """
+    character_count = token_count * 4
+    return text[-character_count:]
+
+
 def get_gpt_prefixed_response(text: str) -> str:
     prompt = f"{PROMPT_PREFIX}\n{text}"
     write_most_recent_prompt_to_file_if_enabled(prompt)
+    prompt = coerce_to_token_count(
+        prompt, 4097 - 500
+    )  # 4097 is the max token count, 500 is the response
     response = get_gpt_response(prompt)
     return remove_hallucinated_master_response(response)
 
