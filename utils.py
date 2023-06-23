@@ -41,7 +41,6 @@ def write_history_into_file(history: ChatHistory):
 
 def record_in_history(chat_id: str, text: str, history: ChatHistory):
     history.add(chat_id, text)
-    # log_value_annotated("CHAT HISTORY", history.get(chat_id))
 
 
 def retry(times: int = 3):
